@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DrawCoin Wallet</title>
+  <style>
+    body {
+      background: #0f0f0f;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .wallet {
+      background: #1e1e2f;
+      border-radius: 20px;
+      box-shadow: 0 0 20px #7b00ff66;
+      padding: 30px;
+      text-align: center;
+      width: 300px;
+    }
+
+    .wallet h1 {
+      margin: 0;
+      font-size: 24px;
+      color: #7b00ff;
+    }
+
+    .wallet p.address {
+      font-size: 12px;
+      color: #ccc;
+      margin-bottom: 20px;
+    }
+
+    .balance {
+      font-size: 40px;
+      font-weight: bold;
+      margin: 20px 0;
+      color: #00ffcc;
+    }
+
+    .coin {
+      font-size: 16px;
+      color: #aaa;
+    }
+
+    button {
+      background: #7b00ff;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 12px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+
+    button:hover {
+      background: #9f3aff;
+    }
+  </style>
+</head>
+<body>
+
+<div class="wallet">
+  <h1>DrawCoin Wallet</h1>
+  <p class="address" id="walletAddress">0x...loading</p>
+  <div class="balance" id="balance">0.000</div>
+  <div class="coin">DWC</div>
+  <button onclick="refreshBalance()">🔄 Обновить баланс</button>
+</div>
+
+<script>
+  function generateRandomAddress() {
+    const chars = 'abcdef0123456789';
+    let address = '0x';
+    for (let i = 0; i < 40; i++) {
+      address += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return address;
+  }
+
+  function generateRandomBalance() {
+    return (Math.random() * 100).toFixed(3);
+  }
+
+  function refreshBalance() {
+    document.getElementById('balance').textContent = generateRandomBalance();
+  }
+
+  // Инициализация при загрузке
+  document.getElementById('walletAddress').textContent = generateRandomAddress();
+  refreshBalance();
+</script>
+
+</body>
+</html>
