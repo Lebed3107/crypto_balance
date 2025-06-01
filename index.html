@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DrawCoin Wallet</title>
+  <title>USDT Wallet - BNB Chain</title>
   <style>
     body {
-      background: #0f0f0f;
+      background: #101010;
       color: #fff;
       font-family: 'Segoe UI', sans-serif;
       display: flex;
@@ -17,42 +17,48 @@
     }
 
     .wallet {
-      background: #1e1e2f;
+      background: #1c1c2b;
       border-radius: 20px;
-      box-shadow: 0 0 20px #7b00ff66;
+      box-shadow: 0 0 15px rgba(0,255,180,0.3);
       padding: 30px;
       text-align: center;
-      width: 300px;
+      width: 340px;
+    }
+
+    .wallet img {
+      width: 60px;
+      margin-bottom: 10px;
     }
 
     .wallet h1 {
       margin: 0;
       font-size: 24px;
-      color: #7b00ff;
+      color: #26a17b;
     }
 
     .wallet p.address {
-      font-size: 12px;
-      color: #ccc;
-      margin-bottom: 20px;
+      font-size: 13px;
+      color: #aaa;
+      margin: 10px 0;
+      word-break: break-all;
     }
 
     .balance {
-      font-size: 40px;
+      font-size: 36px;
       font-weight: bold;
-      margin: 20px 0;
-      color: #00ffcc;
+      margin: 20px 0 10px;
+      color: #00ffc4;
     }
 
     .coin {
       font-size: 16px;
-      color: #aaa;
+      color: #ccc;
     }
 
     button {
-      background: #7b00ff;
+      background: #26a17b;
       border: none;
-      padding: 10px 20px;
+      padding: 12px 20px;
       border-radius: 12px;
       color: white;
       font-weight: bold;
@@ -61,41 +67,63 @@
     }
 
     button:hover {
-      background: #9f3aff;
+      background: #2bdc9d;
     }
   </style>
 </head>
 <body>
 
 <div class="wallet">
-  <h1>DrawCoin Wallet</h1>
-  <p class="address" id="walletAddress">0x...loading</p>
+  <img src="https://cryptologos.cc/logos/tether-usdt-logo.png" alt="USDT Icon">
+  <h1>USDT Wallet</h1>
+  <p class="address" id="walletAddress">Not connected</p>
   <div class="balance" id="balance">0.000</div>
-  <div class="coin">DWC</div>
-  <button onclick="refreshBalance()">🔄 Обновить баланс</button>
+  <div class="coin">USDT (BNB Smart Chain)</div>
+  <button onclick="connect()">🔌 Подключить MetaMask</button>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
 <script>
-  function generateRandomAddress() {
-    const chars = 'abcdef0123456789';
-    let address = '0x';
-    for (let i = 0; i < 40; i++) {
-      address += chars[Math.floor(Math.random() * chars.length)];
+  const USDT_BSC_CONTRACT = "0x55d398326f99059fF775485246999027B3197955"; // USDT (BEP-20)
+  const USDT_ABI = [
+    "function balanceOf(address owner) view returns (uint256)",
+    "function decimals() view returns (uint8)"
+  ];
+
+  async function connect() {
+    if (!window.ethereum) {
+      alert("Установите MetaMask!");
+      return;
     }
-    return address;
-  }
 
-  function generateRandomBalance() {
-    return (Math.random() * 100).toFixed(3);
-  }
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts", []);
+    const signer = provider.getSigner();
+    const address = await signer.getAddress();
 
-  function refreshBalance() {
-    document.getElementById('balance').textContent = generateRandomBalance();
-  }
+    document.getElementById("walletAddress").textContent = address;
 
-  // Инициализация при загрузке
-  document.getElementById('walletAddress').textContent = generateRandomAddress();
-  refreshBalance();
+    // Проверка, что мы в сети BNB Smart Chain (Chain ID 56)
+    const { chainId } = await provider.getNetwork();
+    if (chainId !== 56) {
+      try {
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: "0x38" }] // 56 в hex
+        });
+      } catch (e) {
+        alert("Не удалось переключиться на сеть BNB");
+        return;
+      }
+    }
+
+    const contract = new ethers.Contract(USDT_BSC_CONTRACT, USDT_ABI, provider);
+    const balance = await contract.balanceOf(address);
+    const decimals = await contract.decimals();
+    const formatted = ethers.utils.formatUnits(balance, decimals);
+
+    document.getElementById("balance").textContent = parseFloat(formatted).toFixed(2);
+  }
 </script>
 
 </body>
